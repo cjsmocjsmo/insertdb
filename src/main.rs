@@ -27,6 +27,7 @@ pub fn calc_hash(apath: String) -> types::ImgHashStruct {
 
 fn main() {
     envvars::set_env_vars();
+    let _tables = db::create_tables();
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
         println!("Usage: {} <apath>", args[0]);
