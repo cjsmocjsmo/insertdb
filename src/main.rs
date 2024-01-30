@@ -5,6 +5,10 @@ extern crate img_hash;
 use image;
 use img_hash::HasherConfig;
 use std::fs;
+use std::fs::File;
+use std::io::{Read, Write};
+use std::sync::mpsc::channel;
+use threadpool::ThreadPool;
 
 pub mod db;
 pub mod envvars;
@@ -36,23 +40,42 @@ pub fn calc_hash(apath: String) -> types::ImgHashStruct {
 }
 
 pub fn insert_into_db(apath: String) {
-    let imgid = Uuid::new_v4().to_string();
-    let imghash = calc_hash(apath.clone());
-    let ext = crate::ext_from(apath.clone());
-    let img_meta = types::Meta {
-        imgid: imgid.clone(),
-        imghash: imghash.hash.to_base64(),
-        imgpath: apath.clone(),
-    };
-    if ext == "jpg".to_string() {
-        db::insert_jpg(img_meta).unwrap();
-    } else if ext == "png".to_string() {
-        db::insert_png(img_meta).unwrap();
-    } else if ext == "bmp".to_string() {
-        db::insert_bmp(img_meta).unwrap();
+    if test_img_open(apath.clone()) {
+        let imgid = Uuid::new_v4().to_string();
+        let imghash = calc_hash(apath.clone());
+        let ext = crate::ext_from(apath.clone());
+        let img_meta = types::Meta {
+            imgid: imgid.clone(),
+            imghash: imghash.hash.to_base64(),
+            imgpath: apath.clone(),
+        };
+        if ext == "jpg".to_string() {
+            db::insert_jpg(img_meta).unwrap();
+        } else if ext == "png".to_string() {
+            db::insert_png(img_meta).unwrap();
+        } else if ext == "bmp".to_string() {
+            db::insert_bmp(img_meta).unwrap();
+        } else {
+            println!("Unknown file type: {:?}", apath);
+            return;
+        };
     } else {
-        println!("Unknown file type: {:?}", apath);
-        return;
+        // move fname to unable_to_open_dir
+        let unable_to_open_dir = env::var("UNABLE_TO_OPEN").expect("UNABLE_TO_OPEN not set");
+        let fname_split = apath.split("/").collect::<Vec<&str>>();
+        let f_name = fname_split.last().unwrap().to_string();
+        let unable_to_open_path = format!("{}{}", unable_to_open_dir, f_name);
+        println!("Unable to open: {:?}", unable_to_open_path);
+
+        let mut infile = File::open(apath.clone()).expect("Unable to open file");
+        let mut contents = Vec::new();
+        infile
+            .read_to_end(&mut contents)
+            .unwrap();
+
+        let _otf = File::create(unable_to_open_path.clone()).expect("Unable to create file");
+        let mut outfile = File::open(unable_to_open_path.clone()).unwrap();
+        outfile.write(&contents).expect("Unable to write data");
     }
 }
 
@@ -77,17 +100,24 @@ fn main() {
     {
         if e.metadata().unwrap().is_file() {
             let fname = e.path().to_string_lossy().to_string();
-            if test_img_open(fname.clone()) {
-                fn_vec.push(fname.clone());
-            } else {
-                // move fname to unable_to_open_dir
-                let unable_to_open_dir = env::var("UNABLE_TO_OPEN").expect("UNABLE_TO_OPEN not set");
-                let fname_split = fname.split("/").collect::<Vec<&str>>();
-                let f_name = fname_split.last().unwrap().to_string();
-                let unable_to_open_path = format!("{}{}", unable_to_open_dir, f_name);
-                println!("Unable to open: {:?}", unable_to_open_path);
-                fs::rename(fname.clone(), unable_to_open_path.clone()).expect("Unable to move file");
-            }
+            fn_vec.push(fname);
         }
+    }
+
+    let pool = ThreadPool::new(num_cpus::get());
+    let (tx, rx) = channel();
+    for jpg in fn_vec {
+        println!("jpg {}", jpg);
+        let tx = tx.clone();
+        pool.execute(move || {
+            let insertdb = crate::insert_into_db(jpg.clone());
+            tx.send(insertdb).unwrap();
+        });
+    }
+    drop(tx);
+
+    for t in rx.iter() {
+        let info = t;
+        println!("Info: {:?}", info.clone());
     }
 }
