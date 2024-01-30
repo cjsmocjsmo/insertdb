@@ -4,16 +4,26 @@ use walkdir::WalkDir;
 extern crate img_hash;
 use image;
 use img_hash::HasherConfig;
+use std::fs;
 
 pub mod db;
 pub mod envvars;
 pub mod types;
 
-fn ext_from(fname: String) -> String {
+pub fn ext_from(fname: String) -> String {
     let ext_split = fname.split(".").collect::<Vec<&str>>();
     let ext = ext_split.last().unwrap().to_string();
 
     ext
+}
+
+pub fn test_img_open(apath: String) -> bool {
+    let image_results = image::open(apath.clone());
+    if image_results.is_ok() {
+        true
+    } else {
+        false
+    }
 }
 
 pub fn calc_hash(apath: String) -> types::ImgHashStruct {
@@ -25,6 +35,27 @@ pub fn calc_hash(apath: String) -> types::ImgHashStruct {
     imghash
 }
 
+pub fn insert_into_db(apath: String) {
+    let imgid = Uuid::new_v4().to_string();
+    let imghash = calc_hash(apath.clone());
+    let ext = crate::ext_from(apath.clone());
+    let img_meta = types::Meta {
+        imgid: imgid.clone(),
+        imghash: imghash.hash.to_base64(),
+        imgpath: apath.clone(),
+    };
+    if ext == "jpg".to_string() {
+        db::insert_jpg(img_meta).unwrap();
+    } else if ext == "png".to_string() {
+        db::insert_png(img_meta).unwrap();
+    } else if ext == "bmp".to_string() {
+        db::insert_bmp(img_meta).unwrap();
+    } else {
+        println!("Unknown file type: {:?}", apath);
+        return;
+    }
+}
+
 fn main() {
     envvars::set_env_vars();
     let _tables = db::create_tables();
@@ -34,6 +65,7 @@ fn main() {
         return;
     }
     let apath = &args[1];
+    let mut fn_vec = Vec::new();
 
     for e in WalkDir::new(apath.clone())
         .follow_links(true)
@@ -42,23 +74,12 @@ fn main() {
     {
         if e.metadata().unwrap().is_file() {
             let fname = e.path().to_string_lossy().to_string();
-            let imgid = Uuid::new_v4().to_string();
-            let imghash = calc_hash(fname.clone());
-            let ext = ext_from(fname.clone());
-            let img_meta = types::Meta {
-                imgid: imgid.clone(),
-                imghash: imghash.hash.to_base64(),
-                imgpath: fname.clone(),
-            };
-            if ext == "jpg".to_string() {
-                db::insert_jpg(img_meta).unwrap();
-            } else if ext == "png".to_string() {
-                db::insert_png(img_meta).unwrap();
-            } else if ext == "bmp".to_string() {
-                db::insert_bmp(img_meta).unwrap();
+            if test_img_open(fname.clone()) {
+                fn_vec.push(fname.clone());
             } else {
-                println!("Unknown file type: {:?}", fname);
-                continue;
+                // remove fname
+                // fs::remove_file(fname.clone()).expect("Unable to remove file");
+                println!("Unable to open file:\n {:?}", fname);
             }
         }
     }
