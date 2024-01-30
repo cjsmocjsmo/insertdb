@@ -5,8 +5,8 @@ extern crate img_hash;
 use image;
 use img_hash::HasherConfig;
 use std::fs;
-use std::fs::File;
-use std::io::{Read, Write};
+// use std::fs::File;
+// use std::io::{Read, Write};
 use std::sync::mpsc::channel;
 use threadpool::ThreadPool;
 
@@ -60,22 +60,8 @@ pub fn insert_into_db(apath: String) {
             return;
         };
     } else {
-        // move fname to unable_to_open_dir
-        let unable_to_open_dir = env::var("UNABLE_TO_OPEN").expect("UNABLE_TO_OPEN not set");
-        let fname_split = apath.split("/").collect::<Vec<&str>>();
-        let f_name = fname_split.last().unwrap().to_string();
-        let unable_to_open_path = format!("{}{}", unable_to_open_dir, f_name);
-        println!("Unable to open: {:?}", unable_to_open_path);
-
-        let mut infile = File::open(apath.clone()).expect("Unable to open file");
-        let mut contents = Vec::new();
-        infile
-            .read_to_end(&mut contents)
-            .unwrap();
-
-        let _otf = File::create(unable_to_open_path.clone()).expect("Unable to create file");
-        let mut outfile = File::open(unable_to_open_path.clone()).unwrap();
-        outfile.write(&contents).expect("Unable to write data");
+        fs::remove_file(apath).expect("Unable to remove file");
+        
     }
 }
 
