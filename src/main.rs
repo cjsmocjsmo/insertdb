@@ -67,6 +67,9 @@ fn main() {
     let apath = &args[1];
     let mut fn_vec = Vec::new();
 
+    let unable_to_open_dir = env::var("UNABLE_TO_OPEN").expect("UNABLE_TO_OPEN not set");
+    fs::create_dir_all(unable_to_open_dir).expect("Unable to create directory");
+
     for e in WalkDir::new(apath.clone())
         .follow_links(true)
         .into_iter()
@@ -77,9 +80,12 @@ fn main() {
             if test_img_open(fname.clone()) {
                 fn_vec.push(fname.clone());
             } else {
-                // remove fname
-                // fs::remove_file(fname.clone()).expect("Unable to remove file");
-                println!("Unable to open file:\n {:?}", fname);
+                // move fname to unable_to_open_dir
+                let unable_to_open_dir = env::var("UNABLE_TO_OPEN").expect("UNABLE_TO_OPEN not set");
+                let fname_split = fname.split("/").collect::<Vec<&str>>();
+                let fname = fname_split.last().unwrap().to_string();
+                let unable_to_open_path = format!("{}/{}", unable_to_open_dir, fname);
+                fs::rename(fname.clone(), unable_to_open_path.clone()).expect("Unable to move file");
             }
         }
     }
