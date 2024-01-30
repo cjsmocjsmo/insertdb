@@ -83,8 +83,8 @@ fn main() {
                 // move fname to unable_to_open_dir
                 let unable_to_open_dir = env::var("UNABLE_TO_OPEN").expect("UNABLE_TO_OPEN not set");
                 let fname_split = fname.split("/").collect::<Vec<&str>>();
-                let fname = fname_split.last().unwrap().to_string();
-                let unable_to_open_path = format!("{}{}", unable_to_open_dir, fname);
+                let f_name = fname_split.last().unwrap().to_string();
+                let unable_to_open_path = format!("{}{}", unable_to_open_dir, f_name);
                 println!("Unable to open: {:?}", unable_to_open_path);
                 fs::rename(fname.clone(), unable_to_open_path.clone()).expect("Unable to move file");
             }
