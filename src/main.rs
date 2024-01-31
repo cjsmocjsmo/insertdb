@@ -50,11 +50,11 @@ pub fn insert_into_db(apath: String) {
             imgpath: apath.clone(),
         };
         if ext == "jpg".to_string() {
-            db::insert_jpg(img_meta).unwrap();
+            db::insert_jpg(img_meta).expect("Dup Hash unable to insert");
         } else if ext == "png".to_string() {
-            db::insert_png(img_meta).unwrap();
+            db::insert_png(img_meta).expect("Dup Hash unable to insert");
         } else if ext == "bmp".to_string() {
-            db::insert_bmp(img_meta).unwrap();
+            db::insert_bmp(img_meta).expect("Dup Hash unable to insert");
         } else {
             println!("Unknown file type: {:?}", apath);
             return;
