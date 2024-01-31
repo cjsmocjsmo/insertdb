@@ -2,9 +2,9 @@
 
 cd /home/pipi/insertdb;
 git pull;
-cargo run --release -- /media/pipi/0123-4567/Master_Split;
-cargo run --release -- /media/pipi/taz/Master_Split;
-cargo run --release -- /media/pipi/USB01/Master_Split;
+cargo run --release -- /media/pipi/0123-4567/ALL;
+# cargo run --release -- /media/pipi/taz/Master_Split;
+# cargo run --release -- /media/pipi/USB01/Master_Split;
 
 cd /media/pipi/0123-4567/JPG;
 ls -l | wc -l;
