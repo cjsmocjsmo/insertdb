@@ -34,7 +34,7 @@ pub fn create_png_table() -> Result<()> {
         "CREATE TABLE IF NOT EXISTS pngs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             imgid TEXT NOT NULL,
-            imghash TEXT NOT NULL UNIQUE,
+            imghash TEXT NOT NULL,
             imgpath TEXT NOT NULL
          )",
         (),
@@ -52,7 +52,7 @@ pub fn create_bmp_table() -> Result<()> {
         "CREATE TABLE IF NOT EXISTS bmps (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             imgid TEXT NOT NULL,
-            imghash TEXT NOT NULL UNIQUE,
+            imghash TEXT NOT NULL,
             imgpath TEXT NOT NULL
          )",
         (),
