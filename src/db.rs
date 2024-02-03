@@ -16,7 +16,7 @@ pub fn create_jpg_table() -> Result<()> {
         "CREATE TABLE IF NOT EXISTS jpgs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             imgid TEXT NOT NULL,
-            imghash TEXT NOT NULL UNIQUE,
+            imghash TEXT NOT NULL,
             imgpath TEXT NOT NULL
          )",
         (),
