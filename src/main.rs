@@ -5,8 +5,6 @@ extern crate img_hash;
 use image;
 use img_hash::HasherConfig;
 use std::fs;
-// use std::fs::File;
-// use std::io::{Read, Write};
 use std::sync::mpsc::channel;
 use threadpool::ThreadPool;
 
@@ -61,7 +59,6 @@ pub fn insert_into_db(apath: String) {
         };
     } else {
         fs::remove_file(apath).expect("Unable to remove file");
-        
     }
 }
 
