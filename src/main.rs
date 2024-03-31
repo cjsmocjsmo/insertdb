@@ -2,7 +2,6 @@ use std::env;
 use uuid::Uuid;
 use walkdir::WalkDir;
 extern crate img_hash;
-use image;
 use img_hash::HasherConfig;
 use std::fs;
 use std::sync::mpsc::channel;
